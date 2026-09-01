@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <unistd.h>
+
+#define NUM_PROCESOS 5
+
+// Variables compartidas para el algoritmo
+bool eligiendo[NUM_PROCESOS] = {false};
+int ticket[NUM_PROCESOS] = {0};
+
+void* panaderia(void* arg) {
+    int id = *((int*)arg);
+
+    while (1) {
+        // --- SECCIÓN DE ENTRADA (Algoritmo de Lamport) ---
+        eligiendo[id] = true;
+        int max_ticket = 0;
+        for (int i = 0; i < NUM_PROCESOS; i++) {
+            if (ticket[i] > max_ticket) max_ticket = ticket[i];
+        }
+        ticket[id] = max_ticket + 1;
+        eligiendo[id] = false;
+
+        for (int i = 0; i < NUM_PROCESOS; i++) {
+            // Esperar mientras otros procesos están eligiendo número
+            while (eligiendo[i]);
+            
+            // Esperar mientras otro proceso tiene un ticket menor o igual (empate)
+            while (ticket[i] != 0 && (ticket[i] < ticket[id] || (ticket[i] == ticket[id] && i < id)));
+        }
+
+        // --- SECCIÓN CRÍTICA ---
+        printf("Proceso %d entrando a la sección crítica (Ticket: %d)\n", id, ticket[id]);
+        sleep(1); // Simula trabajo
+        printf("Proceso %d saliendo de la sección crítica\n", id);
+
+        // --- SECCIÓN DE SALIDA ---
+        ticket[id] = 0; // Libera su turno
+        
+        sleep(1); // Espera antes de intentar entrar de nuevo
+    }
+}
+
+int main() {
+    pthread_t hilos[NUM_PROCESOS];
+    int ids[NUM_PROCESOS];
+
+    for (int i = 0; i < NUM_PROCESOS; i++) {
+        ids[i] = i;
+        pthread_create(&hilos[i], NULL, panaderia, &ids[i]);
+    }
+
+    for (int i = 0; i < NUM_PROCESOS; i++) {
+        pthread_join(hilos[i], NULL);
+    }
+
+    return 0;
+}
