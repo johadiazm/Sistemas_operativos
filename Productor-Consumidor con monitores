@@ -1,0 +1,24 @@
+class Buffer {
+private int item;
+private boolean disponible = false;
+// Método del productor
+public synchronized void producir(int valor) throws InterruptedException {
+while (disponible) {
+wait(); // espera hasta que el buffer esté libre
+}
+item = valor;
+disponible = true;
+System.out.println("Produje: " + valor);
+notify(); // despierta al consumidor
+}
+// Método del consumidor
+public synchronized int consumir() throws InterruptedException {
+while (!disponible) {
+wait(); // espera hasta que haya ítem
+}
+disponible = false;
+System.out.println("Consumí: " + item);
+notify(); // despierta al productor
+return item;
+}
+}
