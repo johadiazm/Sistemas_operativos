@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#define N 5
+#define CICLOS 3
+
+sem_t tenedor[N];
+
+void* filosofo(void* arg) {
+    int id = *(int*)arg;
+    for (int i = 0; i < CICLOS; i++) {
+        printf("Filósofo %d pensando...\n", id);
+
+        sem_wait(&tenedor[id]);             // Tenedor izquierdo
+        sem_wait(&tenedor[(id+1)%N]);       // Tenedor derecho
+
+        printf("Filósofo %d comiendo...\n", id);
+
+        sem_post(&tenedor[id]);             // Suelta izquierdo
+        sem_post(&tenedor[(id+1)%N]);       // Suelta derecho
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t filosofos[N];
+    int ids[N];
+
+    for (int i = 0; i < N; i++) {
+        sem_init(&tenedor[i], 0, 1);
+        ids[i] = i;
+    }
+
+    for (int i = 0; i < N; i++) {
+        pthread_create(&filosofos[i], NULL, filosofo, &ids[i]);
+    }
+
+    for (int i = 0; i < N; i++) {
+        pthread_join(filosofos[i], NULL);
+        sem_destroy(&tenedor[i]);
+    }
+
+    return 0;
+}
