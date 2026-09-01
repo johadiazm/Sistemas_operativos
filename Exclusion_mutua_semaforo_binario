@@ -1,0 +1,33 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#define ITERACIONES 1000000
+
+int contador = 0;
+sem_t sem;
+
+void* incrementar(void* arg) {
+    for (int i = 0; i < ITERACIONES; i++) {
+        sem_wait(&sem);   // Bloquea acceso
+        contador++;       // Región crítica
+        sem_post(&sem);   // Libera acceso
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t t1, t2;
+    sem_init(&sem, 0, 1); // Semáforo binario inicializado en 1
+
+    pthread_create(&t1, NULL, incrementar, NULL);
+    pthread_create(&t2, NULL, incrementar, NULL);
+
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+
+    sem_destroy(&sem);
+
+    printf("Valor final del contador: %d\n", contador);
+    return 0;
+}
