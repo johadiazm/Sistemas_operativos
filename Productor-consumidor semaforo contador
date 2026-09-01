@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#define BUFFER_SIZE 5
+int buffer[BUFFER_SIZE];
+int in = 0, out = 0;
+sem_t empty; // Espacios vacíos
+sem_t full; // Elementos llenos
+pthread_mutex_t mutex;
+void* productor(void* arg) {
+for (int i = 0; i < 10; i++) {
+sem_wait(&empty);
+pthread_mutex_lock(&mutex);
+buffer[in] = i;
+printf("Produje: %d\n", i);
+in = (in + 1) % BUFFER_SIZE;
+pthread_mutex_unlock(&mutex);
+sem_post(&full);
+}
+return NULL;
+}
