@@ -1,0 +1,75 @@
+class Buffer {
+    private int item;
+    private boolean disponible = false;
+
+    // Método del productor
+    public synchronized void producir(int valor) throws InterruptedException {
+        while (disponible) {
+            wait(); // espera hasta que el buffer esté libre
+        }
+        item = valor;
+        disponible = true;
+        System.out.println("Produje: " + valor);
+        notify(); // despierta al consumidor
+    }
+
+    // Método del consumidor
+    public synchronized int consumir() throws InterruptedException {
+        while (!disponible) {
+            wait(); // espera hasta que haya ítem
+        }
+        disponible = false;
+        System.out.println("Consumí: " + item);
+        notify(); // despierta al productor
+        return item;
+    }
+}
+
+class Productor extends Thread {
+    private Buffer buffer;
+
+    public Productor(Buffer buffer) {
+        this.buffer = buffer;
+    }
+
+    public void run() {
+        try {
+            for (int i = 0; i < 10; i++) {
+                buffer.producir(i);
+                Thread.sleep(100); // simula tiempo de producción
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class Consumidor extends Thread {
+    private Buffer buffer;
+
+    public Consumidor(Buffer buffer) {
+        this.buffer = buffer;
+    }
+
+    public void run() {
+        try {
+            for (int i = 0; i < 10; i++) {
+                buffer.consumir();
+                Thread.sleep(150); // simula tiempo de consumo
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class ProductorConsumidorMonitor {
+    public static void main(String[] args) {
+        Buffer buffer = new Buffer();
+        Productor productor = new Productor(buffer);
+        Consumidor consumidor = new Consumidor(buffer);
+
+        productor.start();
+        consumidor.start();
+    }
+}
