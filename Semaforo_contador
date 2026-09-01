@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+int buffer; // Solo un recurso compartido
+sem_t empty; // Espacios vacíos
+sem_t full; // Elementos llenos
+void* productor(void* arg) {
+for (int i = 0; i < 10; i++) {
+sem_wait(&empty); // Espera espacio disponible
+buffer = i; // Produce un ítem
+printf("Produje: %d\n", i);
+sem_post(&full); // Señala que hay un ítem
+}
+return NULL;
+}
+void* consumidor(void* arg) {
+for (int i = 0; i < 10; i++) {
+sem_wait(&full); // Espera ítem disponible
+int item = buffer; // Consume el ítem
+printf("Consumí: %d\n", item);
+sem_post(&empty); // Señala que hay espacio libre
+}
+return NULL;
+}
+int main() {
+pthread_t prod, cons;
+sem_init(&empty, 0, 1); // Al inicio hay 1 espacio libre
+sem_init(&full, 0, 0); // Al inicio no hay ítems
+pthread_create(&prod, NULL, productor, NULL);
+pthread_create(&cons, NULL, consumidor, NULL);
+pthread_join(prod, NULL);
+pthread_join(cons, NULL);
+sem_destroy(&empty);
+sem_destroy(&full);
+return 0;
+}
