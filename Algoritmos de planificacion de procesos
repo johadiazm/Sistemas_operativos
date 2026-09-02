@@ -1,0 +1,100 @@
+import java.util.*;
+
+
+class Proceso { String id;
+int llegada; int servicio; int prioridad; int restante;
+
+Proceso(String id, int llegada, int servicio, int prioridad) { this.id = id;
+this.llegada = llegada; this.servicio = servicio; this.prioridad = prioridad; this.restante = servicio;
+}
+}
+
+
+public class Planificacion {
+public static void main(String[] args) { List<Proceso> procesos = new ArrayList<>(); procesos.add(new Proceso("P1", 0, 7, 3));
+procesos.add(new Proceso("P2", 1, 4, 1));
+procesos.add(new Proceso("P3", 3, 6, 2));
+procesos.add(new Proceso("P4", 5, 3, 4));
+procesos.add(new Proceso("P5", 6, 5, 2));
+
+
+fifo(procesos); sjf(procesos);
+ 
+roundRobin(procesos, 2); prioridad(procesos);
+}
+
+
+// FIFO
+static void fifo(List<Proceso> procesos) { int tiempo = 0;
+System.out.println("\n--- FIFO ---"); for (Proceso p : procesos) {
+int inicio = Math.max(tiempo, p.llegada); int fin = inicio + p.servicio;
+int retorno = fin - p.llegada;
+int espera = retorno - p.servicio; int respuesta = inicio - p.llegada;
+double retornoNorm = (double) retorno / p.servicio;
+System.out.printf("%s | Inicio:%d Fin:%d Retorno:%d Espera:%d Respuesta:%d RetNorm:%.2f\n",
+p.id, inicio, fin, retorno, espera, respuesta, retornoNorm); tiempo = fin;
+}
+}
+
+
+// SJF
+static void sjf(List<Proceso> procesos) { int tiempo = 0;
+List<Proceso> lista = new ArrayList<>(procesos); System.out.println("\n--- SJF ---");
+while (!lista.isEmpty()) {
+List<Proceso> disponibles = new ArrayList<>(); for (Proceso p : lista) {
+ 
+if (p.llegada <= tiempo) disponibles.add(p);
+}
+if (disponibles.isEmpty()) { tiempo++;
+continue;
+}
+Proceso p = Collections.min(disponibles, Comparator.comparingInt(x -> x.servicio)); int inicio = Math.max(tiempo, p.llegada);
+int fin = inicio + p.servicio; int retorno = fin - p.llegada;
+int espera = retorno - p.servicio; int respuesta = inicio - p.llegada;
+double retornoNorm = (double) retorno / p.servicio;
+System.out.printf("%s | Inicio:%d Fin:%d Retorno:%d Espera:%d Respuesta:%d RetNorm:%.2f\n",
+p.id, inicio, fin, retorno, espera, respuesta, retornoNorm); tiempo = fin;
+lista.remove(p);
+}
+}
+
+
+// Round Robin
+static void roundRobin(List<Proceso> procesos, int quantum) { int tiempo = 0;
+Queue<Proceso> cola = new LinkedList<>(procesos); Map<String, Integer> pendientes = new HashMap<>(); for (Proceso p : procesos) pendientes.put(p.id, p.servicio);
+
+System.out.println("\n--- Round Robin ---"); while (!cola.isEmpty()) {
+ 
+Proceso p = cola.poll();
+if (pendientes.get(p.id) > 0) {
+int ejecucion = Math.min(quantum, pendientes.get(p.id));
+System.out.printf("%s ejecuta de %d a %d\n", p.id, tiempo, tiempo + ejecucion); pendientes.put(p.id, pendientes.get(p.id) - ejecucion);
+tiempo += ejecucion;
+if (pendientes.get(p.id) > 0) cola.add(p);
+}
+}
+}
+
+
+// Prioridades
+static void prioridad(List<Proceso> procesos) { int tiempo = 0;
+List<Proceso> lista = new ArrayList<>(procesos); System.out.println("\n--- Prioridades ---");
+while (!lista.isEmpty()) {
+List<Proceso> disponibles = new ArrayList<>(); for (Proceso p : lista) {
+if (p.llegada <= tiempo) disponibles.add(p);
+}
+if (disponibles.isEmpty()) { tiempo++;
+continue;
+}
+Proceso p = Collections.min(disponibles, Comparator.comparingInt(x -> x.prioridad)); int inicio = Math.max(tiempo, p.llegada);
+int fin = inicio + p.servicio; int retorno = fin - p.llegada;
+int espera = retorno - p.servicio;
+ 
+int respuesta = inicio - p.llegada;
+double retornoNorm = (double) retorno / p.servicio;
+System.out.printf("%s | Inicio:%d Fin:%d Retorno:%d Espera:%d Respuesta:%d Prioridad:%d RetNorm:%.2f\n",
+p.id, inicio, fin, retorno, espera, respuesta, p.prioridad, retornoNorm); tiempo = fin;
+lista.remove(p);
+}
+}
+}
